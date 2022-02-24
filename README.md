@@ -8,13 +8,13 @@ Screegle Multiple Window Sharing
 
 # test
 
-1 - open `https://webrtc.github.io/samples//src/content/getusermedia/getdisplaymedia/`
-2 - click `Start` and you should see "Screegle" shown in the bottom left corner
-3 - click the S icon of the Screegle extension: it should open the window picker
-4 - pick a window
-5 - the window should appear
+- open `https://webrtc.github.io/samples//src/content/getusermedia/getdisplaymedia/`
+- click `Start` and you should see "Screegle" shown in the bottom left corner
+- click the S icon of the Screegle extension: it should open the window picker
+- pick a window
+- the window should appear
 
-Repeat 3-4 for any new window you'd like to share
+Repeat for any new window you'd like to share
 
 # contact
 
