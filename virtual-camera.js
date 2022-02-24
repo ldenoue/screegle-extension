@@ -71,7 +71,6 @@ async function captureStream(streamId) {
 }
 
 function draw() {
-  //ctx.clearRect(0,0,width,height)
   ctx.fillStyle = 'black'
   ctx.fillRect(0,0,width,height)
   ctx.fillStyle = 'white'
@@ -82,15 +81,14 @@ function draw() {
   let list = []
   for (let windowId in streams) {
     let stream = streams[windowId]
-    let zOrder = stream.rect.z
-    list.push({windowId,zOrder})
+    if (stream) {
+      let zOrder = stream.rect.z
+      list.push({windowId,zOrder})
+    }
   }
   list.sort((a,b) => b.zOrder - a.zOrder)
   for (let item of list) {
     let stream = streams[item.windowId]
-    //let rect = stream.rect
-    //let video = stream.video
-    //ctx.drawImage(video,0,0,video.videoWidth,video.videoHeight,sx*rect.x,sy*rect.y,sx*rect.w,sy*rect.h)
     drawSource(stream)
   }
   requestAnimationFrame(draw)
