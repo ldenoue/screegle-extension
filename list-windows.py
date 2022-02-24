@@ -1,4 +1,4 @@
-#!/usr/bin/python -u
+#!/usr/bin/env python
 
 from curses import getwin
 import json
@@ -79,37 +79,60 @@ def test():
 
     print('\nDetailed window information: {0}\n'.format(w))
 
-# Read a message from stdin and decode it.
-def get_message():
-    raw_length = sys.stdin.read(4)
-    if not raw_length:
-        sys.exit(0)
-    message_length = struct.unpack('=I', raw_length)[0]
-    message = sys.stdin.read(message_length)
-    return json.loads(message)
 
-# Encode a message for transmission, given its content.
-def encode_message(message_content):
-    encoded_content = json.dumps(message_content)
-    encoded_length = struct.pack('=I', len(encoded_content))
-    return {'length': encoded_length, 'content': encoded_content}
+try:
+    # Python 3.x version
+    # Read a message from stdin and decode it.
+    def getMessage():
+        rawLength = sys.stdin.buffer.read(4)
+        if len(rawLength) == 0:
+            sys.exit(0)
+        messageLength = struct.unpack('@I', rawLength)[0]
+        message = sys.stdin.buffer.read(messageLength).decode('utf-8')
+        return json.loads(message)
 
-# Send an encoded message to stdout.
-def send_message(encoded_message):
-    sys.stdout.write(encoded_message['length'])
-    sys.stdout.write(encoded_message['content'])
-    sys.stdout.flush()
+    # Encode a message for transmission,
+    # given its content.
+    def encodeMessage(messageContent):
+        encodedContent = json.dumps(messageContent).encode('utf-8')
+        encodedLength = struct.pack('@I', len(encodedContent))
+        return {'length': encodedLength, 'content': encodedContent}
 
-#test()
-#print(getWindowInfo('49180'))
-while True:
-    message = get_message()
-    #send_message(encode_message("pong"))
-    #if message == "ping":
-    #    send_message(encode_message("pong"))
-    #if message == "windowposition":
-    #    send_message(encode_message(getWindowInfo()))
-    if message == "all":
-        send_message(encode_message(getWindowInfos()))
-    else:
-        send_message(encode_message(getWindowInfo(message)))
+    # Send an encoded message to stdout
+    def sendMessage(encodedMessage):
+        sys.stdout.buffer.write(encodedMessage['length'])
+        sys.stdout.buffer.write(encodedMessage['content'])
+        sys.stdout.buffer.flush()
+
+    while True:
+        receivedMessage = getMessage()
+        if receivedMessage == "ping":
+            sendMessage(encodeMessage("pong3"))
+except AttributeError:
+    # Python 2.x version (if sys.stdin.buffer is not defined)
+    # Read a message from stdin and decode it.
+    def getMessage():
+        rawLength = sys.stdin.read(4)
+        if len(rawLength) == 0:
+            sys.exit(0)
+        messageLength = struct.unpack('@I', rawLength)[0]
+        message = sys.stdin.read(messageLength)
+        return json.loads(message)
+
+    # Encode a message for transmission,
+    # given its content.
+    def encodeMessage(messageContent):
+        encodedContent = json.dumps(messageContent)
+        encodedLength = struct.pack('@I', len(encodedContent))
+        return {'length': encodedLength, 'content': encodedContent}
+
+    # Send an encoded message to stdout
+    def sendMessage(encodedMessage):
+        sys.stdout.write(encodedMessage['length'])
+        sys.stdout.write(encodedMessage['content'])
+        sys.stdout.flush()
+
+    while True:
+        receivedMessage = getMessage()
+        if receivedMessage == "all":
+            sendMessage(encodeMessage(getWindowInfos()))

@@ -8,7 +8,8 @@
 
 const getAllWindowsInterval = 200
 
-var port = chrome.runtime.connectNative('com.appblit.screegle');
+let port = chrome.runtime.connectNative('com.appblit.screegle');
+
 port.onMessage.addListener(function(msg) {
   if (msg !== 'error') {
     let array = msg.split('#')
@@ -16,6 +17,7 @@ port.onMessage.addListener(function(msg) {
   }
   setTimeout(getAllWindows,getAllWindowsInterval)
 });
+
 port.onDisconnect.addListener(function() {
   console.log("Disconnected");
 });
@@ -32,16 +34,13 @@ function parseWindowInfo(array) {
     let w = +info[3]
     let h = +info[4]
     z++
+    console.log(x,y,w,h,z)
     windowIDs[windowId] = {x,y,w,h,z}
   }
 }
 
 function getAllWindows() {
   port.postMessage('all')
-}
-
-function getWindowPosition(windowId) {
-  port.postMessage(windowId)
 }
 
 function sendMessageActiveTab(json)

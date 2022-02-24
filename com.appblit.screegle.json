@@ -3,6 +3,7 @@
     "description": "Native Messaging Host for Screegle extension",
     "path": "/Users/denoue/git.fxpal.com/screegle-extension/list-windows.py",
     "type": "stdio",
+    "allowed_extensions": [ "screegle@appblit.com" ],
     "allowed_origins": [
         "chrome-extension://bhpgdennfeodfchnlephbfppkcfoidcp/"
     ]

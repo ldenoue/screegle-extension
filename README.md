@@ -7,7 +7,13 @@ Screegle Multiple Window Sharing
 - `git clone https://github.com/ldenoue/screegle-extension.git`
 - `chmod +x list-windows.py`
 - edit `com.appblit.screegle.json` replacing `/Users/denoue/git.fxpal.com/screegle-extension/list-windows.py` with the fullpath of where `list-windows.py` is (where you git clone) 
+
+# for Chrome
 - `cp com.appblit.screegle.json ~/Library/Application\ Support/Google/Chrome/NativeMessagingHosts/.`
+
+# for Firefox
+- `mkdir ~/Library/Application\ Support/Mozilla/NativeMessagingHosts`
+- `cp com.appblit.screegle.json ~/Library/Application\ Support/Mozilla/NativeMessagingHosts/.`
 
 # test
 
