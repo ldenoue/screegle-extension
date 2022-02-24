@@ -3,9 +3,8 @@ Screegle Multiple Window Sharing
 
 # install
 
-- chmod +x list-windows.py
-- in com.appblit.screegle.json, replace the chrome-extension ID (here bhpgdennfeodfchnlephbfppkcfoidcp) with what your Chrome gives you
-- cp com.appblit.screegle.json ~/Library/Application\ Support/Google/Chrome/NativeMessagingHosts/.
+- `chmod +x list-windows.py`
+- `cp com.appblit.screegle.json ~/Library/Application\ Support/Google/Chrome/NativeMessagingHosts/.`
 
 # test
 
