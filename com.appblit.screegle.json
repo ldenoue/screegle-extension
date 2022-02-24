@@ -1,0 +1,9 @@
+{
+    "name": "com.appblit.screegle",
+    "description": "Native Messaging Host for Screegle extension",
+    "path": "/Users/denoue/git.fxpal.com/screegle-extension/list-windows.py",
+    "type": "stdio",
+    "allowed_origins": [
+        "chrome-extension://bhpgdennfeodfchnlephbfppkcfoidcp/"
+    ]
+}
