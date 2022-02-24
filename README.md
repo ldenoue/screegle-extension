@@ -1,6 +1,7 @@
 # screegle-extension
 Screegle Multiple Window Sharing
 
+![screegle screenshot](screegle-screenshot.jpg)
 # install
 
 - `chmod +x list-windows.py`
