@@ -1,37 +1,14 @@
+let useWindowID = false
 let streams = []
 const pollRectsInterval = 200
 const radius = 11
 const LINE_WIDTH = 4
 let pollRectsTimeout = null
-
-function scaledRect(r) {
-  r.x *= sx
-  r.y *= sy
-  r.w *= sx
-  r.h *= sy
-  return r
-}
-
-window.addEventListener("PassToBackground", function(evt) {
-  //console.log('got evt=',evt.detail);
-  if (evt.detail.rectangles) {
-    for (let item of evt.detail.rectangles) {
-      let windowId = item.windowId
-      let rect = item.rect
-      if (streams[windowId])
-        streams[windowId].rect = scaledRect(rect)
-    }
-    pollRectsTimeout = setTimeout(pollRects,pollRectsInterval)
-  }
-  else if (evt.detail.pickWindowNow) {
-    pickWindow();
-  }
-}, false);
-
-let canvas = document.createElement('canvas')
 let width = 1280
 let height = 720
-let fps = 30
+let fps = 12
+
+let canvas = document.createElement('canvas')
 canvas.width = width
 canvas.height = height
 let ctx = canvas.getContext('2d')
@@ -42,6 +19,52 @@ ctx.fillText('Screegle',10,10)
 let stream = canvas.captureStream(fps)
 let sx = canvas.width / screen.width
 let sy = canvas.height / screen.height
+function scaledRect(r) {
+  return {x:(r.x * sx)|0, y: (r.y * sy)|0, w: (r.w * sx)|0, h: (r.h * sy)|0}
+}
+
+window.addEventListener("PassToBackground", function(evt) {
+  if (evt.detail.rectanglesBySize) {
+    for (let item of evt.detail.rectanglesBySize) {
+      let wh = item.w + 'x' + item.h
+      for (let s in streams) {
+        let swh = streams[s].rect.w + 'x' + streams[s].rect.h
+        if (swh === wh) {
+          //console.log('rect=',item)
+          streams[s].rect = item
+          break
+        }
+        swh = streams[s].rect.w + 'x' + (streams[s].rect.h+1)
+        if (swh === wh) {
+          streams[s].rect = item
+          break
+        }
+        swh = (streams[s].rect.w+1) + 'x' + streams[s].rect.h
+        if (swh === wh) {
+          streams[s].rect = item
+          break
+        }
+        swh = (streams[s].rect.w+1) + 'x' + (streams[s].rect.h+1)
+        if (swh === wh) {
+          streams[s].rect = item
+        }
+      }
+    }
+    pollRectsTimeout = setTimeout(pollRects,pollRectsInterval)
+  }
+  else if (evt.detail.rectangles) {
+    for (let item of evt.detail.rectangles) {
+      let windowId = item.windowId
+      let rect = item.rect
+      if (streams[windowId])
+        streams[windowId].rect = rect
+    }
+    pollRectsTimeout = setTimeout(pollRects,pollRectsInterval)
+  }
+  else if (evt.detail.pickWindowNow) {
+    pickWindow();
+  }
+}, false);
 
 async function wait(ms) {
   return new Promise(resolve => {
@@ -50,7 +73,7 @@ async function wait(ms) {
 }
 
 function sendToInject(json) {
-  var event = new CustomEvent("PassToBackground", {detail: json});
+  let event = new CustomEvent("PassToBackground", {detail: json});
   window.dispatchEvent(event);
 }
 
@@ -123,8 +146,8 @@ function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
   if (typeof radius === 'number') {
     radius = {tl: radius, tr: radius, br: radius, bl: radius};
   } else {
-    var defaultRadius = {tl: 0, tr: 0, br: 0, bl: 0};
-    for (var side in defaultRadius) {
+    let defaultRadius = {tl: 0, tr: 0, br: 0, bl: 0};
+    for (let side in defaultRadius) {
       radius[side] = radius[side] || defaultRadius[side];
     }
   }
@@ -151,14 +174,30 @@ function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
 
 function drawSource(source) {
   ctx.save()
-  let rect = source.rect
+  let rect = scaledRect(source.rect)
   rounded(ctx,rect)
   ctx.drawImage(source.video,rect.x,rect.y,rect.w,rect.h)
   ctx.restore()
   roundRect(ctx,rect.x,rect.y,rect.w,rect.h,radius,false,true);
+  ctx.fillStyle='blue'
+  let w = source.video.videoWidth
+  let h = source.video.videoHeight
+  ctx.fillText(w + 'x' + h,rect.x+32,rect.y+32)
+  if (!useWindowID) {
+    // get latest w/h in case user has resized the window
+    source.rect.w = w
+    source.rect.h = h
+  }
 }
 
 function pollRects() {
+  if (useWindowID)
+    pollRectsByWindowId()
+  else
+    pollRectsBySizes()
+}
+
+function pollRectsByWindowId() {
   let ids = []
   for (let windowId in streams)
     ids.push(windowId)
@@ -166,58 +205,22 @@ function pollRects() {
     sendToInject({rects:ids})
 }
 
-/*function monkeyPatchMediaDevices() {
+function pollRectsBySizes() {
+  let ids = []
+  for (let windowId in streams) {
+    let rect = streams[windowId].rect
+    ids.push(rect.w+'x'+rect.h)
+  }
+  if (ids.length > 0)
+  {
+    //console.log(ids)
+    sendToInject({rectSizes:ids})
+  }
+}
 
-  const enumerateDevicesFn = MediaDevices.prototype.enumerateDevices;
-  const getUserMediaFn = MediaDevices.prototype.getDisplayMedia;
-
-  MediaDevices.prototype.enumerateDevices = async function () {
-    const res = await enumerateDevicesFn.call(navigator.mediaDevices);
-    res.push({
-      deviceId: "virtual",
-      groupID: "com.appblit.screegle",
-      kind: "videoinput",
-      label: "Screegle",
-    });
-    return res;
-  };
-
-  MediaDevices.prototype.getUserMedia = async function () {
-    const args = arguments;
-    console.log(args[0]);
-    if (args.length && args[0].video && args[0].video.deviceId) {
-      if (
-        args[0].video.deviceId === "virtual" ||
-        args[0].video.deviceId.exact === "virtual"
-      ) {
-        // This constraints could mimick closely the request.
-        // Also, there could be a preferred webcam on the options.
-        // Right now it defaults to the predefined input.
-        const constraints = {
-          video: {
-            facingMode: args[0].facingMode,
-            advanced: args[0].video.advanced,
-            width: args[0].video.width,
-            height: args[0].video.height,
-          },
-          audio: false,
-        };
-        const res = await getUserMediaFn.call(
-          navigator.mediaDevices,
-          constraints
-        );
-        if (res) {
-          const filter = new FilterStream(res);
-          return filter.outputStream;
-        }
-      }
-    }
-    const res = await getUserMediaFn.call(navigator.mediaDevices, ...arguments);
-    return res;
-  };
-}*/
-
-//monkeyPatchMediaDevices()
+function uid() {
+  return (performance.now().toString(36)+Math.random().toString(36)).replace(/\./g,"");
+};
 
 const getDisplayMediaFn = MediaDevices.prototype.getDisplayMedia;
 async function pickWindow() {
@@ -229,18 +232,12 @@ async function pickWindow() {
   await wait(1000)
   let settings = track.getSettings()
   let parts = settings.deviceId.split(':')
-  /*if (parts[0] !== 'window')
-  {
-      track.stop()
-      return
-  }*/
-  let windowId = parts[1]
-  console.log(windowId)
-  //sendToInject({windowId})
-  //console.log('stream w/h=',settings.width,settings.height,settings)
+  let windowId = uid()
+  if (useWindowID) {
+    windowId = parts[1]
+  }
   let video = document.createElement('video')
   video.onloadedmetadata = () => {
-    console.log(video.videoWidth,video.videoHeight)
     streams[windowId] = {video:video,rect:{x:0,y:0,w:video.videoWidth,h:video.videoHeight,z:0}}
     if (Object.keys(streams).length === 1)
       pollRects()
@@ -258,9 +255,5 @@ async function pickWindow() {
 }
 
 MediaDevices.prototype.getDisplayMedia = async function (options) {
-  //console.log(options)
-  //if (options && options.screegle)
-    return stream
-  //else
-  //  return await getDisplayMediaFn.call(navigator.mediaDevices,options);
+  return stream
 }

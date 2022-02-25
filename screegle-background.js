@@ -7,12 +7,15 @@
 // test page https://webrtc.github.io/samples//src/content/getusermedia/getdisplaymedia/
 
 const getAllWindowsInterval = 200
+let windowIDs = {}
+let rectByWidthHeight = {}
 
 let port = chrome.runtime.connectNative('com.appblit.screegle');
 
 port.onMessage.addListener(function(msg) {
   if (msg !== 'error') {
     let array = msg.split('#')
+    rectByWidthHeight = {}
     parseWindowInfo(array)
   }
   setTimeout(getAllWindows,getAllWindowsInterval)
@@ -21,8 +24,6 @@ port.onMessage.addListener(function(msg) {
 port.onDisconnect.addListener(function() {
   console.log("Disconnected");
 });
-
-let windowIDs = {}
 
 function parseWindowInfo(array) {
   let z = 0 // z == 0 = topmost window to draw last
@@ -34,8 +35,12 @@ function parseWindowInfo(array) {
     let w = +info[3]
     let h = +info[4]
     z++
-    console.log(x,y,w,h,z)
+    //console.log(x,y,w,h,z)
     windowIDs[windowId] = {x,y,w,h,z}
+    rectByWidthHeight[w+'x'+h] = {x,y,w,h,z}
+    rectByWidthHeight[(w-1)+'x'+h] = {x,y,w,h,z}
+    rectByWidthHeight[w+'x'+(h-1)] = {x,y,w,h,z}
+    rectByWidthHeight[(w-1)+'x'+(h-1)] = {x,y,w,h,z}
   }
 }
 
@@ -49,7 +54,9 @@ function sendMessageActiveTab(json)
     if (tabs && tabs.length > 0)
     {
       var tab = tabs[0];
-      chrome.tabs.sendMessage(tab.id, json, res => console.log(res));
+      chrome.tabs.sendMessage(tab.id, json, res => {
+        //console.log(res)
+      });
     }
   });
 }
@@ -62,17 +69,22 @@ async function requestCallback(request, sender, sendResponse)
       if (windowIDs[windowId])
         rectangles.push({windowId:windowId,rect:windowIDs[windowId]})
     }
-    sendResponse({rectangles:rectangles})
-  } else if (request.pickWindow) {
-    sendMessageActiveTab({pickWindowNow:true})
-  } else if (request.windowId) {
-    if (!windowIDs[request.windowId]) {
-      windowIDs[request.windowId] = {x:0,y:0,w:10,h:10}
-    }
+    sendResponse({rectangles})
   }
-  sendResponse({ok:true})
+  else if (request.rectSizes) {
+    let rectanglesBySize = []
+    for (let wh of request.rectSizes) {
+      if (rectByWidthHeight[wh])
+        rectanglesBySize.push(rectByWidthHeight[wh])
+    }
+    sendResponse({rectanglesBySize})
+  }/* else if (request.pickWindow) {
+    sendMessageActiveTab({pickWindowNow:true})
+  }*/ else {
+    sendResponse({ok:true})
+  }
   // important: we want to use sendResponse asynchronously sometimes
-  return true;
+  //return true;
 }
 
 chrome.runtime.onMessage.addListener(requestCallback);

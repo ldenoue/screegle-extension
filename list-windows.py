@@ -39,11 +39,11 @@ def getWindowInfos():
         #z = int(v.valueForKey_('kCGWindowLayer'))
         #name = str(v.valueForKey_('kCGWindowOwnerName'))
         #res.append(windowId + "," + str(x) + "," + str(y) + "," + str(w) + "," + str(h) + "," + str(z) + "," + str(name))
-        res.append(windowId + "," + str(x) + "," + str(y) + "," + str(w) + "," + str(h))
+        if w > 24 and h > 24:
+            res.append(windowId + "," + str(x) + "," + str(y) + "," + str(w) + "," + str(h))
     return '#'.join(res)
 
 def getWindowInfo(windowID):
-    #49885
     wl = CGWindowListCopyWindowInfo(Quartz.kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements, kCGNullWindowID)
     for v in wl:
         windowNumber = str(v.valueForKey_('kCGWindowNumber'))
@@ -79,7 +79,7 @@ def test():
 
     print('\nDetailed window information: {0}\n'.format(w))
 
-
+#print(getWindowInfo('49180'))
 try:
     # Python 3.x version
     # Read a message from stdin and decode it.
