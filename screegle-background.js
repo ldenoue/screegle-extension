@@ -94,3 +94,9 @@ chrome.browserAction.onClicked.addListener(function(tab) {
 });
 
 getAllWindows()
+
+/*let old = chrome.desktopCapture.chooseDesktopMedia
+let c = document.createElement('canvas')
+c.getContext('2d').fillRect(0,0,c.width,c.height)
+let s = c.captureStream()
+chrome.desktopCapture.chooseDesktopMedia = function (a,b,c) { return s }*/

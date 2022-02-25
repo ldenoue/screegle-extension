@@ -182,7 +182,7 @@ function drawSource(source) {
   ctx.fillStyle='blue'
   let w = source.video.videoWidth
   let h = source.video.videoHeight
-  ctx.fillText(w + 'x' + h,rect.x+32,rect.y+32)
+  //ctx.fillText(w + 'x' + h,rect.x+32,rect.y+32)
   if (!useWindowID) {
     // get latest w/h in case user has resized the window
     source.rect.w = w
@@ -223,6 +223,7 @@ function uid() {
 };
 
 const getDisplayMediaFn = MediaDevices.prototype.getDisplayMedia;
+
 async function pickWindow() {
   let stream = await getDisplayMediaFn.call(navigator.mediaDevices,{});
   let track = stream.getVideoTracks()[0]
@@ -254,6 +255,9 @@ async function pickWindow() {
 
 }
 
+console.log('replacing getDisplayMedia',getDisplayMediaFn)
+
 MediaDevices.prototype.getDisplayMedia = async function (options) {
+  console.log('screegle display media returning its own stream')
   return stream
 }

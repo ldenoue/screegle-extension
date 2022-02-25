@@ -24,3 +24,7 @@ chrome.runtime.onMessage.addListener(async function requestCallback(request, sen
   }
   sendResponse({})
 });
+
+// note: Google Chromes comes with a hidden extension that Meet uses to access chrome.desktopCapture.chooseDesktopMedia
+// https://source.chromium.org/chromium/chromium/src/+/master:chrome/browser/resources/hangout_services/thunk.js;l=232
+// so Screegle extension is bypassed by it
